@@ -12,7 +12,7 @@ BEARER_TOKEN = ""
 
 
 def authenticate():
-    print(">> Authentication:")
+    print(">> Authentication")
     SUBDOMAIN = input("   Enter your subdomain: ")
     BEARER_TOKEN = input("   Enter your bearer token: ")
 
@@ -27,7 +27,6 @@ def authenticate():
             return True
     except:
         print("\nAuthentication failed. Make sure you have the right subdomain and bearer token. Do not include `Bearer` at the beginning of the bearer token.")
-        # raise
         return False
 
 
@@ -42,14 +41,35 @@ def manipulate_json_payload(payload_json_data):
         server['custom_fields']['cpu_peak_timeseries'] = server['custom_fields'].pop(
             'cpu_peak')
 
+    print("   Processed JSON payload data.")
     return payload_json_data
 
 
+def send_data_to_tidal_api(processed_json_payload):
+    try:
+        url = "https://" + SUBDOMAIN + ".tidalmg.com/api/v1/measurements"
+        # url = "http://localhost:3000/dev/measurements"
+        request = urllib.request.Request(url)
+
+        request.add_header('Content-Type', 'application/json; charset=utf-8')
+        request.add_header("Authorization", "bearer " + BEARER_TOKEN)
+
+        payload_in_bytes = json.dumps(processed_json_payload).encode(
+            'utf-8')
+        request.add_header('Content-Length', len(payload_in_bytes))
+
+        response = urllib.request.urlopen(request, payload_in_bytes)
+
+        if(response.status):
+            print("\n>> Data sent to the Tidal Migrations API!")
+    except:
+        print("Could not send the request to the Tidal Migrations API.")
+        raise
+
+
 if(authenticate()):
-# if(True):
-    print("\n>> Add JSON Payload:")
-    # payload_file_name = input("   Enter the name of your JSON payload file: ")
-    payload_file_name = "./payload.json"
+    print("\n>> Add JSON Payload")
+    payload_file_name = input("   Enter the name of your JSON payload file: ")
 
     try:
         with open(payload_file_name) as json_file_wrapper:
@@ -59,9 +79,10 @@ if(authenticate()):
         print("Could not access the JSON payload file. Please include the relative path if the file is not in the same directory.\n")
         raise
 
-    processed_json_payload = manipulate_json_payload(payload_json_data)
-
     # TODO JSON schema validation
-
     # if(validate_json_payload()):
     #     print("   JSON schema validated.")
+
+    processed_json_payload = manipulate_json_payload(payload_json_data)
+
+    send_data_to_tidal_api(processed_json_payload)
