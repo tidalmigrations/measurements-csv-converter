@@ -6,7 +6,8 @@ It uses subdomain and bearer token for authentication.
     - Bearer token can be found at https://[subdomain].tidalmg.com/#/admin/settings >  Authentication Token
 
 This script takes the JSON file that was created by the machine-stats and send the custom fields as the measurements.
-Current time will be used as the timestamp by the Tidal MIgrations API.
+Only the fields in `custom_fields` can be measured. You can mention the fields to measure in the global variable CUSTOM_FIELDS_TO_MEASURE.
+Tidal MIgrations API will use the current time as the timestamp.
 """
 
 import json
@@ -14,6 +15,7 @@ import urllib.request
 
 SUBDOMAIN = ""
 BEARER_TOKEN = ""
+CUSTOM_FIELDS_TO_MEASURE = ['cpu_average', 'cpu_peak']
 
 
 def authenticate():
@@ -31,16 +33,19 @@ def authenticate():
             print("   Authentication successful.")
             return True
     except:
-        print("\nAuthentication failed. Make sure you have the right subdomain and bearer token. Do not include `Bearer` at the beginning of the bearer token.")
+        print("\nError: Authentication failed. Make sure you have the right subdomain and bearer token. Do not include `Bearer` at the beginning of the bearer token.\n")
         return False
 
 
 def manipulate_json_payload(payload_json_data):
-    for server in payload_json_data['servers']:
-        server['custom_fields']['cpu_average_timeseries'] = server['custom_fields'].pop(
-            'cpu_average')
-        server['custom_fields']['cpu_peak_timeseries'] = server['custom_fields'].pop(
-            'cpu_peak')
+    try:
+        for server in payload_json_data['servers']:
+            for field in CUSTOM_FIELDS_TO_MEASURE:
+                server['custom_fields'][field +
+                                        '_timeseries'] = server['custom_fields'].pop(field)
+    except:
+        print("\nError: Could not process the data. Make sure that all the servers have custom fields mentioned in CUSTOM_FIELDS_TO_MEASURE list.\n")
+        raise
 
     print("   Processed JSON payload data.")
     return payload_json_data
@@ -51,19 +56,19 @@ def send_data_to_tidal_api(processed_json_payload):
         url = "https://" + SUBDOMAIN + ".tidalmg.com/api/v1/measurements"
         request = urllib.request.Request(url)
 
+        payload_in_bytes = json.dumps(processed_json_payload).encode(
+            'utf-8')    # encode payload dictionary to bytes
+
         request.add_header('Content-Type', 'application/json; charset=utf-8')
         request.add_header("Authorization", "bearer " + BEARER_TOKEN)
-
-        payload_in_bytes = json.dumps(processed_json_payload).encode(
-            'utf-8')
         request.add_header('Content-Length', len(payload_in_bytes))
 
         response = urllib.request.urlopen(request, payload_in_bytes)
 
         if(response.status):
-            print("\n>> Data sent to the Tidal Migrations API!")
+            print("\n>> Data sent to the Tidal Migrations API!\n")
     except:
-        print("Could not send the request to the Tidal Migrations API.")
+        print("\nError: Could not send the request to the Tidal Migrations API.\n")
         raise
 
 
@@ -76,7 +81,7 @@ if(authenticate()):
             payload_json_data = json.load(json_file_wrapper)
             json_file_wrapper.close()
     except:
-        print("Could not access the JSON payload file. Please include the relative path if the file is not in the same directory.\n")
+        print("\nError: Could not access the JSON payload file. Please include the relative path if the file is not in the same directory.\n")
         raise
 
     processed_json_payload = manipulate_json_payload(payload_json_data)
