@@ -35,10 +35,6 @@ def authenticate():
         return False
 
 
-def validate_json_payload():
-    return True
-
-
 def manipulate_json_payload(payload_json_data):
     for server in payload_json_data['servers']:
         server['custom_fields']['cpu_average_timeseries'] = server['custom_fields'].pop(
@@ -53,7 +49,6 @@ def manipulate_json_payload(payload_json_data):
 def send_data_to_tidal_api(processed_json_payload):
     try:
         url = "https://" + SUBDOMAIN + ".tidalmg.com/api/v1/measurements"
-        # url = "http://localhost:3000/dev/measurements"
         request = urllib.request.Request(url)
 
         request.add_header('Content-Type', 'application/json; charset=utf-8')
@@ -83,10 +78,6 @@ if(authenticate()):
     except:
         print("Could not access the JSON payload file. Please include the relative path if the file is not in the same directory.\n")
         raise
-
-    # TODO JSON schema validation
-    # if(validate_json_payload()):
-    #     print("   JSON schema validated.")
 
     processed_json_payload = manipulate_json_payload(payload_json_data)
 
