@@ -1,0 +1,46 @@
+{
+    "servers": [
+        {
+            "cpu_count": 2,
+            "cpu_name": "Intel(R) Xeon(R) CPU @ 2.30GHz",
+            "custom_fields": {
+                "cpu_average": 0.20447975806933325,
+                "cpu_peak": 3.164095712377024,
+                "cpu_sampling_timeout": 30
+            },
+            "fqdn": "instance-1.c.tidal-1529434400027.internal",
+            "host_name": "instance-1",
+            "ip_addresses": [
+                "10.128.15.201",
+                "fe80::4001:aff:fe80:fc9"
+            ],
+            "operating_system": "Debian",
+            "operating_system_version": "10",
+            "ram_allocated_gb": 0.5673828125,
+            "ram_used_gb": 0.2255859375,
+            "storage_allocated_gb": 9.778318405151367,
+            "storage_used_gb": 1.8576221466064453
+        },
+        {
+            "cpu_count": 2,
+            "cpu_name": "Graviton2",
+            "custom_fields": {
+                "cpu_average": 0.44457975638032539,
+                "cpu_peak": 5.134095712377024,
+                "cpu_sampling_timeout": 30
+            },
+            "fqdn": "instance-2.something.internal",
+            "host_name": "instance-2",
+            "ip_addresses": [
+                "10.128.15.202",
+                "af80::4001:aff:fe80:fc7"
+            ],
+            "operating_system": "Ubuntu",
+            "operating_system_version": "20.04",
+            "ram_allocated_gb": 0.5673828125,
+            "ram_used_gb": 0.2255859375,
+            "storage_allocated_gb": 9.778318405151367,
+            "storage_used_gb": 1.8576221466064453
+        }
+    ]
+}
