@@ -6,7 +6,7 @@ It uses subdomain and bearer token for authentication.
     - Bearer token can be found at https://[subdomain].tidalmg.com/#/admin/settings >  Authentication Token
 
 This script takes the JSON file that was created by the machine-stats and send the custom fields as the measurements.
-Only the fields in `custom_fields` can be measured. You can mention the fields to measure in the global variable CUSTOM_FIELDS_TO_MEASURE.
+You can mention the fields to measure in the global variables FIELDS_TO_MEASURE and CUSTOM_FIELDS_TO_MEASURE.
 Tidal MIgrations API will use the current time as the timestamp.
 """
 
@@ -15,6 +15,7 @@ import urllib.request
 
 SUBDOMAIN = ""
 BEARER_TOKEN = ""
+FIELDS_TO_MEASURE = ["ram_used_gb"]
 CUSTOM_FIELDS_TO_MEASURE = ['cpu_average', 'cpu_peak']
 
 
@@ -39,17 +40,40 @@ def authenticate():
 
 def process_json_payload(payload_json_data):
     try:
+        """Process JSON payload
+
+        Go through each server in the JSON payload, for the fields mentioned in the 
+          FIELDS_TO_MEASURE or CUSTOM_FIELDS_TO_MEASURE, add its measurements to the
+          processed data. (See file example_processed_payload.json)
+        """
         processed_json_payload = {'measurements': []}
         for server in payload_json_data['servers']:
-            for field in server['custom_fields']:
-                if field in CUSTOM_FIELDS_TO_MEASURE:
+            for field in server:
+                # Add data from FIELDS_TO_MEASURE list to the processed_json_payload dictionary
+                if field in FIELDS_TO_MEASURE:
                     server_dict = {}
-                    server_dict['measurable_id'] = server['host_name']
+                    server_dict['name'] = server['host_name']
                     server_dict['measurable_type'] = 'server'
-                    server_dict['field_name'] = field + '_timeseries'
-                    server_dict['value'] = server['custom_fields'][field]
+                    server_dict['field_name'] = field + \
+                        '_timeseries'
+                    server_dict['value'] = server[field]
 
-                    processed_json_payload['measurements'].append(server_dict)
+                    processed_json_payload['measurements'].append(
+                        server_dict)
+
+                # Add custom fields data from CUSTOM_FIELDS_TO_MEASURE list to the processed_json_payload dictionary
+                elif field == "custom_fields":
+                    for custom_field in server['custom_fields']:
+                        if custom_field in CUSTOM_FIELDS_TO_MEASURE:
+                            server_dict = {}
+                            server_dict['name'] = server['host_name']
+                            server_dict['measurable_type'] = 'server'
+                            server_dict['field_name'] = custom_field + \
+                                '_timeseries'
+                            server_dict['value'] = server['custom_fields'][custom_field]
+
+                            processed_json_payload['measurements'].append(
+                                server_dict)
     except:
         print("\nError: Could not process the data. Make sure that all the servers have custom fields mentioned in CUSTOM_FIELDS_TO_MEASURE list.\n")
         raise
