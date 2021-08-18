@@ -37,23 +37,30 @@ def authenticate():
         return False
 
 
-def manipulate_json_payload(payload_json_data):
+def process_json_payload(payload_json_data):
     try:
+        processed_json_payload = {'measurements': []}
         for server in payload_json_data['servers']:
-            for field in CUSTOM_FIELDS_TO_MEASURE:
-                server['custom_fields'][field +
-                                        '_timeseries'] = server['custom_fields'].pop(field)
+            for field in server['custom_fields']:
+                if field in CUSTOM_FIELDS_TO_MEASURE:
+                    server_dict = {}
+                    server_dict['measurable_id'] = server['host_name']
+                    server_dict['measurable_type'] = 'server'
+                    server_dict['field_name'] = field + '_timeseries'
+                    server_dict['value'] = server['custom_fields'][field]
+
+                    processed_json_payload['measurements'].append(server_dict)
     except:
         print("\nError: Could not process the data. Make sure that all the servers have custom fields mentioned in CUSTOM_FIELDS_TO_MEASURE list.\n")
         raise
 
     print("   Processed JSON payload data.")
-    return payload_json_data
+    return processed_json_payload
 
 
 def send_data_to_tidal_api(processed_json_payload):
     try:
-        url = "https://" + SUBDOMAIN + ".tidalmg.com/api/v1/measurements"
+        url = "https://" + SUBDOMAIN + ".tidalmg.com/api/v1/measurements/import"
         request = urllib.request.Request(url)
 
         payload_in_bytes = json.dumps(processed_json_payload).encode(
@@ -84,6 +91,6 @@ if(authenticate()):
         print("\nError: Could not access the JSON payload file. Please include the relative path if the file is not in the same directory.\n")
         raise
 
-    processed_json_payload = manipulate_json_payload(payload_json_data)
+    processed_json_payload = process_json_payload(payload_json_data)
 
     send_data_to_tidal_api(processed_json_payload)
