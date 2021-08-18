@@ -1,8 +1,13 @@
-# authenticate
-# get payload
-#   validate
-#   add '_timeseries'
-# Send it to the mmp
+"""
+This python file is used to send the CPU and memory utilization measurements to the Tidal Migrations API.
+
+It uses subdomain and bearer token for authentication.
+    - Subdomain is the name of your workspace.
+    - Bearer token can be found at https://[subdomain].tidalmg.com/#/admin/settings >  Authentication Token
+
+This script takes the JSON file that was created by the machine-stats and send the custom fields as the measurements.
+Current time will be used as the timestamp by the Tidal MIgrations API.
+"""
 
 import json
 import urllib.request
