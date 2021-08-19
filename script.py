@@ -5,19 +5,27 @@ It uses subdomain and bearer token for authentication.
     - Subdomain is the name of your workspace.
     - Bearer token can be found at https://[subdomain].tidalmg.com/#/admin/settings >  Authentication Token
 
+You can add these auth credentials in CLI when running the script or 
+   add them into global variables: TIDAL_SUBDOMAIN, TIDAL_BEARER_TOKEN
+  - You can change this method using IS_USING_ENV_VARS global variable
+
 This script takes the JSON file that was created by the machine-stats and send the custom fields as the measurements.
 You can mention the fields to measure in the global variables FIELDS_TO_MEASURE and CUSTOM_FIELDS_TO_MEASURE.
 Tidal MIgrations API will use the current time as the timestamp.
 """
 
 import json
+import os
 import urllib.request
 
 
-SUBDOMAIN = ""
-BEARER_TOKEN = ""
-FIELDS_TO_MEASURE = ["ram_used_gb"]
-CUSTOM_FIELDS_TO_MEASURE = ['cpu_average', 'cpu_peak']
+"""Use of IS_USING_ENV_VARS global variable
+
+IS_USING_ENV_VARS global variable is used to switch between location of credentials.
+   - When True: environment variables TIDAL_SUBDOMAIN and TIDAL_BEARER_TOKEN is used for authentication.
+   - When False: Manually enter the subdomain and bearer token when running the script.
+"""
+IS_USING_ENV_VARS = True
 
 """Use of ENVIRONMENT global variable
 
@@ -27,13 +35,24 @@ Anything but 'Development' will run the script as Production.
 """
 ENVIRONMENT = "Development"
 
+SUBDOMAIN = ""
+BEARER_TOKEN = ""
+FIELDS_TO_MEASURE = ["ram_used_gb"]
+CUSTOM_FIELDS_TO_MEASURE = ['cpu_average', 'cpu_peak']
+
 
 def authenticate():
     print(">> Authentication")
+
     global SUBDOMAIN
-    SUBDOMAIN = input("   Enter your subdomain: ")
     global BEARER_TOKEN
-    BEARER_TOKEN = input("   Enter your bearer token: ")
+
+    if(IS_USING_ENV_VARS):    
+        SUBDOMAIN = os.environ['TIDAL_SUBDOMAIN']
+        BEARER_TOKEN = os.environ['TIDAL_BEARER_TOKEN']
+    else:
+        SUBDOMAIN = input("   Enter your subdomain: ")
+        BEARER_TOKEN = input("   Enter your bearer token: ")
 
     try:
         if(ENVIRONMENT == "Development"):
