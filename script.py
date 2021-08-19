@@ -25,7 +25,7 @@ IS_USING_ENV_VARS global variable is used to switch between location of credenti
    - When True: environment variables TIDAL_SUBDOMAIN and TIDAL_BEARER_TOKEN is used for authentication.
    - When False: Manually enter the subdomain and bearer token when running the script.
 """
-IS_USING_ENV_VARS = True
+IS_USING_ENV_VARS = False
 
 """Use of ENVIRONMENT global variable
 
