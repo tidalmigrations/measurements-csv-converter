@@ -30,16 +30,18 @@ ENVIRONMENT = "Development"
 
 def authenticate():
     print(">> Authentication")
+    global SUBDOMAIN
     SUBDOMAIN = input("   Enter your subdomain: ")
+    global BEARER_TOKEN
     BEARER_TOKEN = input("   Enter your bearer token: ")
 
     try:
         if(ENVIRONMENT == "Development"):
-            url = "http://dev.localtest.me:3000/api/v1/ping"
+            url = "http://" + SUBDOMAIN + ".localtest.me:3000/api/v1/ping"
         else:
-            url ="https://" + SUBDOMAIN + ".tidalmg.com/api/v1/ping"
+            url = "https://" + SUBDOMAIN + ".tidalmg.com/api/v1/ping"
 
-        request = urllib.request.Request()
+        request = urllib.request.Request(url)
         request.add_header("Authorization", "bearer " + BEARER_TOKEN)
         response = json.loads(urllib.request.urlopen(request).read())
 
@@ -98,10 +100,10 @@ def process_json_payload(payload_json_data):
 def send_data_to_tidal_api(processed_json_payload):
     try:
         if(ENVIRONMENT == "Development"):
-            url = "http://dev.localtest.me:3000/api/v1/measurements/import"
+            url = "http://" + SUBDOMAIN + ".localtest.me:3000/api/v1/measurements/import"
         else:
             url = "https://" + SUBDOMAIN + ".tidalmg.com/api/v1/measurements/import"
-        
+
         request = urllib.request.Request(url)
 
         payload_in_bytes = json.dumps(processed_json_payload).encode(
