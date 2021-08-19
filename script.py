@@ -13,10 +13,19 @@ Tidal MIgrations API will use the current time as the timestamp.
 import json
 import urllib.request
 
+
 SUBDOMAIN = ""
 BEARER_TOKEN = ""
 FIELDS_TO_MEASURE = ["ram_used_gb"]
 CUSTOM_FIELDS_TO_MEASURE = ['cpu_average', 'cpu_peak']
+
+"""Use of ENVIRONMENT global variable
+
+ENVIRONMENT global variable is used to change the API URLs 
+   in local development and Production.
+Anything but 'Development' will run the script as Production.
+"""
+ENVIRONMENT = "Development"
 
 
 def authenticate():
@@ -25,8 +34,12 @@ def authenticate():
     BEARER_TOKEN = input("   Enter your bearer token: ")
 
     try:
-        request = urllib.request.Request(
-            "https://" + SUBDOMAIN + ".tidalmg.com/api/v1/ping")
+        if(ENVIRONMENT == "Development"):
+            url = "http://dev.localtest.me:3000/api/v1/ping"
+        else:
+            url ="https://" + SUBDOMAIN + ".tidalmg.com/api/v1/ping"
+
+        request = urllib.request.Request()
         request.add_header("Authorization", "bearer " + BEARER_TOKEN)
         response = json.loads(urllib.request.urlopen(request).read())
 
@@ -84,7 +97,11 @@ def process_json_payload(payload_json_data):
 
 def send_data_to_tidal_api(processed_json_payload):
     try:
-        url = "https://" + SUBDOMAIN + ".tidalmg.com/api/v1/measurements/import"
+        if(ENVIRONMENT == "Development"):
+            url = "http://dev.localtest.me:3000/api/v1/measurements/import"
+        else:
+            url = "https://" + SUBDOMAIN + ".tidalmg.com/api/v1/measurements/import"
+        
         request = urllib.request.Request(url)
 
         payload_in_bytes = json.dumps(processed_json_payload).encode(
