@@ -32,23 +32,35 @@ def authenticate():
 
     if(configs.is_using_configs):
         SUBDOMAIN = configs.tidal_subdomain
-        BEARER_TOKEN = configs.tidal_bearer_token
+        email = configs.tidal_email
+        password = configs.tidal_password
     else:
         SUBDOMAIN = input("   Enter your subdomain: ")
-        BEARER_TOKEN = input("   Enter your bearer token: ")
+        email = input("   Enter your email: ")
+        password = input("   Enter your email: ")
         print("\n")
 
     try:
         if(configs.environment == "Development"):
-            url = "http://" + SUBDOMAIN + ".localtest.me:3000/api/v1/ping"
+            url = "http://" + SUBDOMAIN + ".localtest.me:3000/api/v1/authenticate"
         else:
-            url = "https://" + SUBDOMAIN + ".tidalmg.com/api/v1/ping"
+            url = "https://" + SUBDOMAIN + ".tidalmg.com/api/v1/authenticate"
 
         request = urllib.request.Request(url)
-        request.add_header("Authorization", "bearer " + BEARER_TOKEN)
-        response = json.loads(urllib.request.urlopen(request).read())
 
-        if(response['authenticated']):
+        payload = {
+            "username": email,
+            "password": password
+        }
+        payload_in_bytes = json.dumps(payload).encode('utf-8')
+
+        request.add_header('Content-Type', 'application/json; charset=utf-8')
+        request.add_header('Content-Length', len(payload_in_bytes))
+
+        response = json.loads(urllib.request.urlopen(request, payload_in_bytes).read())
+
+        if(response['access_token']):
+            BEARER_TOKEN = response['access_token']
             print("   Authentication successful.")
             return True
     except:
@@ -123,7 +135,6 @@ def send_data_to_tidal_api(processed_json_payload):
     except:
         print("\nError: Could not send the request to the Tidal Migrations API.\n")
         raise
-
 
 if(authenticate()):
     print("\n>> Add JSON Payload")
