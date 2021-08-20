@@ -1,6 +1,6 @@
 """Send measurements to the Tidal Migrations API.
 
-This python file is used to send the CPU and memory utilization measurements to the Tidal Migrations API.
+This python script is used to send the CPU and memory utilization measurements to the Tidal Migrations API.
 
 It uses your email, password and subdomain (your workspace name) for authentication.
 You can either add these auth credentials in the configs file or in CLI when running the script.
@@ -12,6 +12,7 @@ This script takes the JSON file that was created by the machine-stats and send
 Tidal Migrations API will use the current time as the timestamp.
 """
 
+import argparse
 import configs
 import json
 import urllib.request
@@ -134,6 +135,16 @@ def send_data_to_tidal_api(processed_json_payload):
         print("\nError: Could not send the request to the Tidal Migrations API.\n")
         raise
 
+
+def add_cli_args():
+    parser = argparse.ArgumentParser(description='Send your server measurements to the Tidal Migrations API.\n'
+                                                 'This script requires some credentials and configs that can be adjusted from configs.py file.\n'
+                                                 'Authentication is done using your subdomain, email and password.\n', formatter_class=argparse.RawTextHelpFormatter)
+
+    args = parser.parse_args()
+
+
+add_cli_args()
 
 if(authenticate()):
     print("\n>> Add JSON Payload")
