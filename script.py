@@ -1,74 +1,70 @@
-"""
-This python file is used to send the CPU and memory utilization measurements to the Tidal Migrations API.
+"""Send measurements to the Tidal Migrations API.
 
-It uses subdomain and bearer token for authentication.
-    - Subdomain is the name of your workspace.
-    - Bearer token can be found at https://[subdomain].tidalmg.com/#/admin/settings >  Authentication Token
+This python script is used to send the CPU and memory utilization measurements to the Tidal Migrations API.
 
-You can add these auth credentials in CLI when running the script or 
-   add them into global variables: TIDAL_SUBDOMAIN, TIDAL_BEARER_TOKEN
-  - You can change this method using IS_USING_ENV_VARS global variable
+It uses your email, password and subdomain (your workspace name) for authentication.
+You can either add these auth credentials in the configs file or in CLI when running the script.
+You can change this method using `configs.is_using_configs` variable.
 
-This script takes the JSON file that was created by the machine-stats and send the custom fields as the measurements.
-You can mention the fields to measure in the global variables FIELDS_TO_MEASURE and CUSTOM_FIELDS_TO_MEASURE.
-Tidal MIgrations API will use the current time as the timestamp.
+This script takes the JSON file that was created by the machine-stats and send 
+   the fields mentioned in the `configs.fields_to_measure` and `configs.custom_fields_to_measure` as the measurements.
+
+Tidal Migrations API will use the current time as the timestamp.
 """
 
+import argparse
+import configs
 import json
-import os
 import urllib.request
 
 
-"""Use of IS_USING_ENV_VARS global variable
-
-IS_USING_ENV_VARS global variable is used to switch between location of credentials.
-   - When True: environment variables TIDAL_SUBDOMAIN and TIDAL_BEARER_TOKEN is used for authentication.
-   - When False: Manually enter the subdomain and bearer token when running the script.
-"""
-IS_USING_ENV_VARS = False
-
-"""Use of ENVIRONMENT global variable
-
-ENVIRONMENT global variable is used to change the API URLs 
-   in local development and Production.
-Anything but 'Development' will run the script as Production.
-"""
-ENVIRONMENT = "Development"
-
 SUBDOMAIN = ""
 BEARER_TOKEN = ""
-FIELDS_TO_MEASURE = ["ram_used_gb"]
-CUSTOM_FIELDS_TO_MEASURE = ['cpu_average', 'cpu_peak']
+ENVIRONMENT = "Production"
 
 
 def authenticate():
-    print(">> Authentication")
+    print(">> Authenticating...")
 
     global SUBDOMAIN
     global BEARER_TOKEN
 
-    if(IS_USING_ENV_VARS):    
-        SUBDOMAIN = os.environ['TIDAL_SUBDOMAIN']
-        BEARER_TOKEN = os.environ['TIDAL_BEARER_TOKEN']
+    if(configs.is_using_configs):
+        SUBDOMAIN = configs.tidal_subdomain
+        email = configs.tidal_email
+        password = configs.tidal_password
     else:
         SUBDOMAIN = input("   Enter your subdomain: ")
-        BEARER_TOKEN = input("   Enter your bearer token: ")
+        email = input("   Enter your email: ")
+        password = input("   Enter your email: ")
+        print("\n")
 
     try:
         if(ENVIRONMENT == "Development"):
-            url = "http://" + SUBDOMAIN + ".localtest.me:3000/api/v1/ping"
+            url = "http://" + SUBDOMAIN + ".localtest.me:3000/api/v1/authenticate"
         else:
-            url = "https://" + SUBDOMAIN + ".tidalmg.com/api/v1/ping"
+            url = "https://" + SUBDOMAIN + ".tidalmg.com/api/v1/authenticate"
 
         request = urllib.request.Request(url)
-        request.add_header("Authorization", "bearer " + BEARER_TOKEN)
-        response = json.loads(urllib.request.urlopen(request).read())
 
-        if(response['authenticated']):
-            print("\n   Authentication successful.")
+        payload = {
+            "username": email,
+            "password": password
+        }
+        payload_in_bytes = json.dumps(payload).encode('utf-8')
+
+        request.add_header('Content-Type', 'application/json; charset=utf-8')
+        request.add_header('Content-Length', len(payload_in_bytes))
+
+        response = json.loads(urllib.request.urlopen(
+            request, payload_in_bytes).read())
+
+        if(response['access_token']):
+            BEARER_TOKEN = response['access_token']
+            print("   Authentication successful!")
             return True
     except:
-        print("\nError: Authentication failed. Make sure you have the right subdomain and bearer token. Do not include `Bearer` at the beginning of the bearer token.\n")
+        print("\nError: Authentication failed. \nMake sure you have the right subdomain, email and password. Check your configs file.\n")
         return False
 
 
@@ -76,47 +72,50 @@ def process_json_payload(payload_json_data):
     try:
         """Process JSON payload
 
-        Go through each server in the JSON payload, for the fields mentioned in the 
-          FIELDS_TO_MEASURE or CUSTOM_FIELDS_TO_MEASURE, add its measurements to the
-          processed data. (See file example_processed_payload.json)
+        Go through each server in the JSON payload, and for the fields mentioned in the 
+          `configs.fields_to_measure` or `configs.custom_fields_to_measure`, add its measurements to the
+          processed data. (See file example_processed_payload.json for reference)
         """
         processed_json_payload = {'measurements': []}
         for server in payload_json_data['servers']:
             for field in server:
-                # Add data from FIELDS_TO_MEASURE list to the processed_json_payload dictionary
-                if field in FIELDS_TO_MEASURE:
+                # Add data from custom_fields_to_measure list to the processed_json_payload dictionary
+                if field in configs.custom_fields_to_measure:
                     server_dict = {}
                     server_dict['name'] = server['host_name']
                     server_dict['measurable_type'] = 'server'
                     server_dict['field_name'] = field + \
                         '_timeseries'
                     server_dict['value'] = server[field]
+                    server_dict['measurable'] = { 'host_name': server['host_name'] }
 
                     processed_json_payload['measurements'].append(
                         server_dict)
 
-                # Add custom fields data from CUSTOM_FIELDS_TO_MEASURE list to the processed_json_payload dictionary
+                # Add custom fields data from custom_fields_to_measure list to the processed_json_payload dictionary
                 elif field == "custom_fields":
                     for custom_field in server['custom_fields']:
-                        if custom_field in CUSTOM_FIELDS_TO_MEASURE:
+                        if custom_field in configs.custom_fields_to_measure:
                             server_dict = {}
                             server_dict['name'] = server['host_name']
                             server_dict['measurable_type'] = 'server'
                             server_dict['field_name'] = custom_field + \
                                 '_timeseries'
                             server_dict['value'] = server['custom_fields'][custom_field]
+                            server_dict['measurable'] = { 'host_name': server['host_name'] }
 
                             processed_json_payload['measurements'].append(
                                 server_dict)
     except:
-        print("\nError: Could not process the data. Make sure that all the servers have custom fields mentioned in CUSTOM_FIELDS_TO_MEASURE list.\n")
+        print("\nError: Could not process the data. \nMake sure that all the servers have the necessary fields. You can customize them on the configs file.\n")
         raise
 
-    print("   Processed JSON payload data.")
+    print("   Process completed!")
     return processed_json_payload
 
 
 def send_data_to_tidal_api(processed_json_payload):
+    print("\n>> Sending data to the Tidal Migrations API!")
     try:
         if(ENVIRONMENT == "Development"):
             url = "http://" + SUBDOMAIN + ".localtest.me:3000/api/v1/measurements/import"
@@ -135,22 +134,41 @@ def send_data_to_tidal_api(processed_json_payload):
         response = urllib.request.urlopen(request, payload_in_bytes)
 
         if(response.status):
-            print("\n>> Data sent to the Tidal Migrations API!\n")
+            print("   Success!\n")
     except:
         print("\nError: Could not send the request to the Tidal Migrations API.\n")
         raise
 
 
+
+
+def add_cli_args():
+    parser = argparse.ArgumentParser(description='This script will facilitate sending your server measurements to the Tidal Migrations API.\n\n'
+                                                    'To get you started, please adjust the config file located at the root of this folder.\n'
+                                                    'You will need to add your Tidal Migrations credentials, such as subdomain, email and password\n'
+                                                    'As well as, the file name containing your machine stats output.\n'
+                                                    'Now that you are ready, run the script with this command.\n\n'
+                                                    '`python3 script.py`\n', formatter_class=argparse.RawTextHelpFormatter)
+
+    args = parser.parse_args()
+
+
+add_cli_args()
+
 if(authenticate()):
-    print("\n>> Add JSON Payload")
-    payload_file_name = input("   Enter the name of your JSON payload file: ")
+    print("\n>> Processing machine-stats output...")
+    if(configs.is_using_configs):
+        payload_file_name = configs.payload_json_file_name
+    else:
+        payload_file_name = input(
+            "   Enter the name of your machine-stats output file: ")
 
     try:
         with open(payload_file_name) as json_file_wrapper:
             payload_json_data = json.load(json_file_wrapper)
             json_file_wrapper.close()
     except:
-        print("\nError: Could not access the JSON payload file. Please include the relative path if the file is not in the same directory.\n")
+        print("\nError: Could not find the machine-stats output file. \nPlease double check the payload_json_file_name variable in your configs file . Make sure you include the relative path if the file is not in the same directory.\n")
         raise
 
     processed_json_payload = process_json_payload(payload_json_data)
