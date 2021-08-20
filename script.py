@@ -65,7 +65,7 @@ def authenticate():
         response = json.loads(urllib.request.urlopen(request).read())
 
         if(response['authenticated']):
-            print("   Authentication successful.")
+            print("\n   Authentication successful.")
             return True
     except:
         print("\nError: Authentication failed. Make sure you have the right subdomain and bearer token. Do not include `Bearer` at the beginning of the bearer token.\n")
