@@ -7,7 +7,7 @@ It uses subdomain and bearer token for authentication.
 
 You can add these auth credentials in CLI when running the script or 
    add them into configs file: TIDAL_SUBDOMAIN, TIDAL_BEARER_TOKEN
-  - You can change this method using configs.is_using_env_vars global variable
+  - You can change this method using configs.is_using_configs variable
 
 This script takes the JSON file that was created by the machine-stats and send the custom fields as the measurements.
 You can mention the fields to measure in the configs: custom_fields_to_measure and custom_fields_to_measure.
@@ -30,12 +30,13 @@ def authenticate():
     global SUBDOMAIN
     global BEARER_TOKEN
 
-    if(configs.is_using_env_vars):
-        SUBDOMAIN = os.environ['TIDAL_SUBDOMAIN']
-        BEARER_TOKEN = os.environ['TIDAL_BEARER_TOKEN']
+    if(configs.is_using_configs):
+        SUBDOMAIN = configs.tidal_subdomain
+        BEARER_TOKEN = configs.tidal_bearer_token
     else:
         SUBDOMAIN = input("   Enter your subdomain: ")
         BEARER_TOKEN = input("   Enter your bearer token: ")
+        print("\n")
 
     try:
         if(configs.environment == "Development"):
@@ -48,7 +49,7 @@ def authenticate():
         response = json.loads(urllib.request.urlopen(request).read())
 
         if(response['authenticated']):
-            print("\n   Authentication successful.")
+            print("   Authentication successful.")
             return True
     except:
         print("\nError: Authentication failed. Make sure you have the right subdomain and bearer token. Do not include `Bearer` at the beginning of the bearer token.\n")
@@ -126,7 +127,10 @@ def send_data_to_tidal_api(processed_json_payload):
 
 if(authenticate()):
     print("\n>> Add JSON Payload")
-    payload_file_name = input("   Enter the name of your JSON payload file: ")
+    if(configs.is_using_configs):
+        payload_file_name = configs.payload_json_file_name
+    else:
+        payload_file_name = input("   Enter the name of your JSON payload file: ")
 
     try:
         with open(payload_file_name) as json_file_wrapper:
