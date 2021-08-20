@@ -82,7 +82,6 @@ def process_json_payload(payload_json_data):
                 # Add data from custom_fields_to_measure list to the processed_json_payload dictionary
                 if field in configs.custom_fields_to_measure:
                     server_dict = {}
-                    server_dict['name'] = server['host_name']
                     server_dict['measurable_type'] = 'server'
                     server_dict['field_name'] = field + \
                         '_timeseries'
@@ -97,7 +96,6 @@ def process_json_payload(payload_json_data):
                     for custom_field in server['custom_fields']:
                         if custom_field in configs.custom_fields_to_measure:
                             server_dict = {}
-                            server_dict['name'] = server['host_name']
                             server_dict['measurable_type'] = 'server'
                             server_dict['field_name'] = custom_field + \
                                 '_timeseries'
