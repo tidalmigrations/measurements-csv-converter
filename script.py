@@ -20,10 +20,11 @@ import urllib.request
 
 SUBDOMAIN = ""
 BEARER_TOKEN = ""
+ENVIRONMENT = "Production"
 
 
 def authenticate():
-    print(">> Authentication")
+    print(">> Authenticating...")
 
     global SUBDOMAIN
     global BEARER_TOKEN
@@ -39,7 +40,7 @@ def authenticate():
         print("\n")
 
     try:
-        if(configs.environment == "Development"):
+        if(ENVIRONMENT == "Development"):
             url = "http://" + SUBDOMAIN + ".localtest.me:3000/api/v1/authenticate"
         else:
             url = "https://" + SUBDOMAIN + ".tidalmg.com/api/v1/authenticate"
@@ -60,10 +61,10 @@ def authenticate():
 
         if(response['access_token']):
             BEARER_TOKEN = response['access_token']
-            print("   Authentication successful.")
+            print("   Authentication successful!")
             return True
     except:
-        print("\nError: Authentication failed. Make sure you have the right subdomain and bearer token. Do not include `Bearer` at the beginning of the bearer token.\n")
+        print("\nError: Authentication failed. \nMake sure you have the right subdomain, email and password. Check your configs file.\n")
         return False
 
 
@@ -106,16 +107,17 @@ def process_json_payload(payload_json_data):
                             processed_json_payload['measurements'].append(
                                 server_dict)
     except:
-        print("\nError: Could not process the data. Make sure that all the servers have custom fields mentioned in custom_fields_to_measure list.\n")
+        print("\nError: Could not process the data. \nMake sure that all the servers have the necessary fields. You can customize them on the configs file.\n")
         raise
 
-    print("   Processed JSON payload data.")
+    print("   Process completed!")
     return processed_json_payload
 
 
 def send_data_to_tidal_api(processed_json_payload):
+    print("\n>> Sending data to the Tidal Migrations API!")
     try:
-        if(configs.environment == "Development"):
+        if(ENVIRONMENT == "Development"):
             url = "http://" + SUBDOMAIN + ".localtest.me:3000/api/v1/measurements/import"
         else:
             url = "https://" + SUBDOMAIN + ".tidalmg.com/api/v1/measurements/import"
@@ -132,16 +134,21 @@ def send_data_to_tidal_api(processed_json_payload):
         response = urllib.request.urlopen(request, payload_in_bytes)
 
         if(response.status):
-            print("\n>> Data sent to the Tidal Migrations API!\n")
+            print("   Success!\n")
     except:
         print("\nError: Could not send the request to the Tidal Migrations API.\n")
         raise
 
 
+
+
 def add_cli_args():
-    parser = argparse.ArgumentParser(description='Send your server measurements to the Tidal Migrations API.\n'
-                                                 'This script requires some credentials and configs that can be adjusted from configs.py file.\n'
-                                                 'Authentication is done using your subdomain, email and password.\n', formatter_class=argparse.RawTextHelpFormatter)
+    parser = argparse.ArgumentParser(description='This script will facilitate sending your server measurements to the Tidal Migrations API.\n\n'
+                                                    'To get you started, please adjust the config file located at the root of this folder.\n'
+                                                    'You will need to add your Tidal Migrations credentials, such as subdomain, email and password\n'
+                                                    'As well as, the file name containing your machine stats output.\n'
+                                                    'Now that you are ready, run the script with this command.\n\n'
+                                                    '`python3 script.py`\n', formatter_class=argparse.RawTextHelpFormatter)
 
     args = parser.parse_args()
 
@@ -149,19 +156,19 @@ def add_cli_args():
 add_cli_args()
 
 if(authenticate()):
-    print("\n>> Add JSON Payload")
+    print("\n>> Processing machine-stats output...")
     if(configs.is_using_configs):
         payload_file_name = configs.payload_json_file_name
     else:
         payload_file_name = input(
-            "   Enter the name of your JSON payload file: ")
+            "   Enter the name of your machine-stats output file: ")
 
     try:
         with open(payload_file_name) as json_file_wrapper:
             payload_json_data = json.load(json_file_wrapper)
             json_file_wrapper.close()
     except:
-        print("\nError: Could not access the JSON payload file. Please include the relative path if the file is not in the same directory.\n")
+        print("\nError: Could not find the machine-stats output file. \nPlease double check the payload_json_file_name variable in your configs file . Make sure you include the relative path if the file is not in the same directory.\n")
         raise
 
     processed_json_payload = process_json_payload(payload_json_data)
