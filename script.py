@@ -6,39 +6,22 @@ It uses subdomain and bearer token for authentication.
     - Bearer token can be found at https://[subdomain].tidalmg.com/#/admin/settings >  Authentication Token
 
 You can add these auth credentials in CLI when running the script or 
-   add them into global variables: TIDAL_SUBDOMAIN, TIDAL_BEARER_TOKEN
-  - You can change this method using IS_USING_ENV_VARS global variable
+   add them into configs file: TIDAL_SUBDOMAIN, TIDAL_BEARER_TOKEN
+  - You can change this method using configs.is_using_env_vars global variable
 
 This script takes the JSON file that was created by the machine-stats and send the custom fields as the measurements.
-You can mention the fields to measure in the global variables FIELDS_TO_MEASURE and CUSTOM_FIELDS_TO_MEASURE.
-Tidal MIgrations API will use the current time as the timestamp.
+You can mention the fields to measure in the configs: custom_fields_to_measure and custom_fields_to_measure.
+Tidal Migrations API will use the current time as the timestamp.
 """
 
+import configs
 import json
 import os
 import urllib.request
 
 
-"""Use of IS_USING_ENV_VARS global variable
-
-IS_USING_ENV_VARS global variable is used to switch between location of credentials.
-   - When True: environment variables TIDAL_SUBDOMAIN and TIDAL_BEARER_TOKEN is used for authentication.
-   - When False: Manually enter the subdomain and bearer token when running the script.
-"""
-IS_USING_ENV_VARS = False
-
-"""Use of ENVIRONMENT global variable
-
-ENVIRONMENT global variable is used to change the API URLs 
-   in local development and Production.
-Anything but 'Development' will run the script as Production.
-"""
-ENVIRONMENT = "Development"
-
 SUBDOMAIN = ""
 BEARER_TOKEN = ""
-FIELDS_TO_MEASURE = ["ram_used_gb"]
-CUSTOM_FIELDS_TO_MEASURE = ['cpu_average', 'cpu_peak']
 
 
 def authenticate():
@@ -47,7 +30,7 @@ def authenticate():
     global SUBDOMAIN
     global BEARER_TOKEN
 
-    if(IS_USING_ENV_VARS):    
+    if(configs.is_using_env_vars):
         SUBDOMAIN = os.environ['TIDAL_SUBDOMAIN']
         BEARER_TOKEN = os.environ['TIDAL_BEARER_TOKEN']
     else:
@@ -55,7 +38,7 @@ def authenticate():
         BEARER_TOKEN = input("   Enter your bearer token: ")
 
     try:
-        if(ENVIRONMENT == "Development"):
+        if(configs.environment == "Development"):
             url = "http://" + SUBDOMAIN + ".localtest.me:3000/api/v1/ping"
         else:
             url = "https://" + SUBDOMAIN + ".tidalmg.com/api/v1/ping"
@@ -77,14 +60,14 @@ def process_json_payload(payload_json_data):
         """Process JSON payload
 
         Go through each server in the JSON payload, for the fields mentioned in the 
-          FIELDS_TO_MEASURE or CUSTOM_FIELDS_TO_MEASURE, add its measurements to the
+          custom_fields_to_measure or custom_fields_to_measure, add its measurements to the
           processed data. (See file example_processed_payload.json)
         """
         processed_json_payload = {'measurements': []}
         for server in payload_json_data['servers']:
             for field in server:
-                # Add data from FIELDS_TO_MEASURE list to the processed_json_payload dictionary
-                if field in FIELDS_TO_MEASURE:
+                # Add data from custom_fields_to_measure list to the processed_json_payload dictionary
+                if field in configs.custom_fields_to_measure:
                     server_dict = {}
                     server_dict['name'] = server['host_name']
                     server_dict['measurable_type'] = 'server'
@@ -95,10 +78,10 @@ def process_json_payload(payload_json_data):
                     processed_json_payload['measurements'].append(
                         server_dict)
 
-                # Add custom fields data from CUSTOM_FIELDS_TO_MEASURE list to the processed_json_payload dictionary
+                # Add custom fields data from custom_fields_to_measure list to the processed_json_payload dictionary
                 elif field == "custom_fields":
                     for custom_field in server['custom_fields']:
-                        if custom_field in CUSTOM_FIELDS_TO_MEASURE:
+                        if custom_field in configs.custom_fields_to_measure:
                             server_dict = {}
                             server_dict['name'] = server['host_name']
                             server_dict['measurable_type'] = 'server'
@@ -109,7 +92,7 @@ def process_json_payload(payload_json_data):
                             processed_json_payload['measurements'].append(
                                 server_dict)
     except:
-        print("\nError: Could not process the data. Make sure that all the servers have custom fields mentioned in CUSTOM_FIELDS_TO_MEASURE list.\n")
+        print("\nError: Could not process the data. Make sure that all the servers have custom fields mentioned in custom_fields_to_measure list.\n")
         raise
 
     print("   Processed JSON payload data.")
@@ -118,7 +101,7 @@ def process_json_payload(payload_json_data):
 
 def send_data_to_tidal_api(processed_json_payload):
     try:
-        if(ENVIRONMENT == "Development"):
+        if(configs.environment == "Development"):
             url = "http://" + SUBDOMAIN + ".localtest.me:3000/api/v1/measurements/import"
         else:
             url = "https://" + SUBDOMAIN + ".tidalmg.com/api/v1/measurements/import"
