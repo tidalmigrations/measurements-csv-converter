@@ -165,6 +165,10 @@ if(authenticate()):
         with open(payload_file_name) as json_file_wrapper:
             payload_json_data = json.load(json_file_wrapper)
             json_file_wrapper.close()
+    except UnicodeDecodeError:
+        with open(payload_file_name, "r", encoding="utf-16") as json_file_wrapper:
+            payload_json_data = json.loads(json_file_wrapper.read())
+            json_file_wrapper.close()
     except:
         print("\nError: Could not find the machine-stats output file. \nPlease double check the payload_json_file_name variable in your configs file . Make sure you include the relative path if the file is not in the same directory.\n")
         raise
