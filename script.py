@@ -15,7 +15,14 @@ Tidal Migrations API will use the current time as the timestamp.
 import argparse
 import configs
 import json
+import sys
 import urllib.request
+
+# Exit if the Python version is less than 3.6
+try:
+    assert sys.version_info >= (3, 6)
+except AssertionError:
+    sys.exit("This script requires Python 3.6+")
 
 
 SUBDOMAIN = ""
@@ -146,7 +153,8 @@ def add_cli_args():
                                                     'You will need to add your Tidal Migrations credentials, such as subdomain, email and password\n'
                                                     'As well as, the file name containing your machine stats output.\n'
                                                     'Now that you are ready, run the script with this command.\n\n'
-                                                    '`python3 script.py`\n', formatter_class=argparse.RawTextHelpFormatter)
+                                                    '`python3 script.py`\n\n'
+                                                    'Note: The script requires Python version 3.6 or higher.\n', formatter_class=argparse.RawTextHelpFormatter)
 
     args = parser.parse_args()
 
@@ -162,7 +170,7 @@ if(authenticate()):
             "   Enter the name of your machine-stats output file: ")
 
     try:
-        with open(payload_file_name) as json_file_wrapper:
+        with open(payload_file_name, "rb") as json_file_wrapper:
             payload_json_data = json.load(json_file_wrapper)
             json_file_wrapper.close()
     except:

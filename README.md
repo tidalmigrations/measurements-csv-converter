@@ -9,6 +9,8 @@ Now that you are ready, run the script with this command.
 
 `python3 script.py`
 
+**Note:** The script requires Python version 3.6 or higher.
+
 To view this the help message run:
 
 `python3 script.py --help`
