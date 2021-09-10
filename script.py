@@ -7,7 +7,8 @@ You can either add these auth credentials in the configs file or in CLI when run
 You can change this method using `configs.is_using_configs` variable.
 
 This script takes the JSON file that was created by the machine-stats and send 
-   the fields mentioned in the `configs.fields_to_measure` and `configs.custom_fields_to_measure` as the measurements.
+   the fields mentioned in the `configs.fields_to_measure` and 
+   `configs.windows_custom_fields_to_measure` or `configs.unix_custom_fields_to_measure` as the measurements.
 
 Tidal Migrations API will use the current time as the timestamp.
 """
@@ -80,37 +81,59 @@ def process_json_payload(payload_json_data):
         """Process JSON payload
 
         Go through each server in the JSON payload, and for the fields mentioned in the 
-          `configs.fields_to_measure` or `configs.custom_fields_to_measure`, add its measurements to the
-          processed data. (See file example_processed_payload.json for reference)
+          `configs.fields_to_measure`, `configs.windows_custom_fields_to_measure` or `unix_custom_fields_to_measure`
+          , add its measurements to the processed data. (See file example_processed_payload.json for reference)
         """
         processed_json_payload = {'measurements': []}
         for server in payload_json_data['servers']:
             for field in server:
-                # Add data from custom_fields_to_measure list to the processed_json_payload dictionary
-                if field in configs.custom_fields_to_measure:
+                # Add data from fields_to_measure list to the processed_json_payload dictionary
+                if field in configs.fields_to_measure:
                     server_dict = {}
                     server_dict['measurable_type'] = 'server'
                     server_dict['field_name'] = field + \
                         '_timeseries'
                     server_dict['value'] = server[field]
-                    server_dict['measurable'] = { 'host_name': server['host_name'] }
+                    server_dict['measurable'] = {
+                        'host_name': server['host_name']}
 
                     processed_json_payload['measurements'].append(
                         server_dict)
 
-                # Add custom fields data from custom_fields_to_measure list to the processed_json_payload dictionary
+                # Add custom fields data from windows_custom_fields_to_measure or unix_custom_fields_to_measure
+                #  list to the processed_json_payload dictionary
                 elif field == "custom_fields":
-                    for custom_field in server['custom_fields']:
-                        if custom_field in configs.custom_fields_to_measure:
-                            server_dict = {}
-                            server_dict['measurable_type'] = 'server'
-                            server_dict['field_name'] = custom_field + \
-                                '_timeseries'
-                            server_dict['value'] = server['custom_fields'][custom_field]
-                            server_dict['measurable'] = { 'host_name': server['host_name'] }
+                    if configs.is_windows:
+                        for custom_field in server['custom_fields']:
+                            if custom_field in configs.windows_custom_fields_to_measure:
+                                server_dict = {}
+                                server_dict['measurable_type'] = 'server'
+                                server_dict['field_name'] = custom_field + \
+                                    '_timeseries'
 
-                            processed_json_payload['measurements'].append(
-                                server_dict)
+                                if custom_field == "cpu_utilization":
+                                    server_dict['value'] = server['custom_fields'][custom_field]["value"]
+                                else:
+                                    server_dict['value'] = server['custom_fields'][custom_field]
+
+                                server_dict['measurable'] = {
+                                    'host_name': server['host_name']}
+
+                                processed_json_payload['measurements'].append(
+                                    server_dict)
+                    else:
+                        for custom_field in server['custom_fields']:
+                            if custom_field in configs.unix_custom_fields_to_measure:
+                                server_dict = {}
+                                server_dict['measurable_type'] = 'server'
+                                server_dict['field_name'] = custom_field + \
+                                    '_timeseries'
+                                server_dict['value'] = server['custom_fields'][custom_field]
+                                server_dict['measurable'] = {
+                                    'host_name': server['host_name']}
+
+                                processed_json_payload['measurements'].append(
+                                    server_dict)
     except:
         print("\nError: Could not process the data. \nMake sure that all the servers have the necessary fields. You can customize them on the configs file.\n")
         raise
@@ -145,16 +168,14 @@ def send_data_to_tidal_api(processed_json_payload):
         raise
 
 
-
-
 def add_cli_args():
     parser = argparse.ArgumentParser(description='This script will facilitate sending your server measurements to the Tidal Migrations API.\n\n'
-                                                    'To get you started, please adjust the config file located at the root of this folder.\n'
-                                                    'You will need to add your Tidal Migrations credentials, such as subdomain, email and password\n'
-                                                    'As well as, the file name containing your machine stats output.\n'
-                                                    'Now that you are ready, run the script with this command.\n\n'
-                                                    '`python3 script.py`\n\n'
-                                                    'Note: The script requires Python version 3.6 or higher.\n', formatter_class=argparse.RawTextHelpFormatter)
+                                     'To get you started, please adjust the config file located at the root of this folder.\n'
+                                     'You will need to add your Tidal Migrations credentials, such as subdomain, email and password\n'
+                                     'As well as, the file name containing your machine stats output.\n'
+                                     'Now that you are ready, run the script with this command.\n\n'
+                                     '`python3 script.py`\n\n'
+                                     'Note: The script requires Python version 3.6 or higher.\n', formatter_class=argparse.RawTextHelpFormatter)
 
     args = parser.parse_args()
 
