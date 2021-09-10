@@ -79,8 +79,8 @@ def process_json_payload(payload_json_data):
         processed_json_payload = {'measurements': []}
         for server in payload_json_data['servers']:
             for field in server:
-                # Add data from custom_fields_to_measure list to the processed_json_payload dictionary
-                if field in configs.custom_fields_to_measure:
+                # Add data from fields_to_measure (ram_used_gb) or custom_fields_to_measure list to the processed_json_payload dictionary
+                if field in configs.fields_to_measure or field in configs.custom_fields_to_measure:
                     server_dict = {}
                     server_dict['measurable_type'] = 'server'
                     server_dict['field_name'] = field + \
