@@ -24,7 +24,8 @@ payload_json_file_name = "example_payload_utf-16.json"
 """How to measure fields
 
 The fields that need to be tracked can be added in the fields_to_measure list.
-If it's a custom field, please add it to the custom_fields_to_measure list.
+If it's a custom field, please add it to the windows_custom_fields_to_measure or
+ unix_custom_fields_to_measure lists accordingly.
 """
 fields_to_measure = ["ram_used_gb"]
 windows_custom_fields_to_measure = ["cpu_utilization", "CPU_L2CacheSize"]
