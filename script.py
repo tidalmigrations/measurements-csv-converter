@@ -86,19 +86,20 @@ def process_json_payload(payload_json_data):
         processed_json_payload = {'measurements': []}
         for server in payload_json_data['servers']:
             for field in server:
-                # Add data from fields_to_measure (ram_used_gb) or custom_fields_to_measure list to the processed_json_payload dictionary
-                if field in configs.fields_to_measure or field in configs.custom_fields_to_measure:
+                # Add data (ram_used_gb) from fields_to_measure list to the processed_json_payload dictionary
+                if field in configs.fields_to_measure:
                     server_dict = {}
                     server_dict['measurable_type'] = 'server'
                     server_dict['field_name'] = field + \
                         '_timeseries'
                     server_dict['value'] = server[field]
-                    server_dict['measurable'] = { 'host_name': server['host_name'] }
+                    server_dict['measurable'] = {
+                        'host_name': server['host_name']}
 
                     processed_json_payload['measurements'].append(
                         server_dict)
 
-                # Add custom fields data from custom_fields_to_measure list to the processed_json_payload dictionary
+                # Add custom fields data (cpu_average) from custom_fields_to_measure list to the processed_json_payload dictionary
                 elif field == "custom_fields":
                     for custom_field in server['custom_fields']:
                         if custom_field in configs.custom_fields_to_measure:
@@ -107,7 +108,8 @@ def process_json_payload(payload_json_data):
                             server_dict['field_name'] = custom_field + \
                                 '_timeseries'
                             server_dict['value'] = server['custom_fields'][custom_field]
-                            server_dict['measurable'] = { 'host_name': server['host_name'] }
+                            server_dict['measurable'] = {
+                                'host_name': server['host_name']}
 
                             processed_json_payload['measurements'].append(
                                 server_dict)
@@ -145,16 +147,14 @@ def send_data_to_tidal_api(processed_json_payload):
         raise
 
 
-
-
 def add_cli_args():
     parser = argparse.ArgumentParser(description='This script will facilitate sending your server measurements to the Tidal Migrations API.\n\n'
-                                                    'To get you started, please adjust the config file located at the root of this folder.\n'
-                                                    'You will need to add your Tidal Migrations credentials, such as subdomain, email and password\n'
-                                                    'As well as, the file name containing your machine stats output.\n'
-                                                    'Now that you are ready, run the script with this command.\n\n'
-                                                    '`python3 script.py`\n\n'
-                                                    'Note: The script requires Python version 3.6 or higher.\n', formatter_class=argparse.RawTextHelpFormatter)
+                                     'To get you started, please adjust the config file located at the root of this folder.\n'
+                                     'You will need to add your Tidal Migrations credentials, such as subdomain, email and password\n'
+                                     'As well as, the file name containing your machine stats output.\n'
+                                     'Now that you are ready, run the script with this command.\n\n'
+                                     '`python3 script.py`\n\n'
+                                     'Note: The script requires Python version 3.6 or higher.\n', formatter_class=argparse.RawTextHelpFormatter)
 
     args = parser.parse_args()
 

@@ -21,7 +21,7 @@ The fields that need to be tracked can be added in the fields_to_measure list.
 If it's a custom field, please add it to the custom_fields_to_measure list.
 """
 fields_to_measure = ["ram_used_gb"]
-custom_fields_to_measure = ['cpu_average', 'cpu_peak']
+custom_fields_to_measure = ["cpu_average", "cpu_peak"]
 
 
 """How to use is_using_configs flag
