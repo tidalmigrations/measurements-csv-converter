@@ -1,0 +1,21 @@
+{
+  "name": "csv-converter",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "debug": "node index.js --verbose --withJSON",
+    "merger": "cd output/csv && awk '(NR == 1) || (FNR > 1)' server-*.csv > aggregated-output.csv",
+    "clean-output": "rm -rf ./output/csv/* && rm -rf ./output/json/*",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "axios": "^0.22.0",
+    "json2csv": "^5.0.6",
+    "minimist": "^1.2.5"
+  }
+}
