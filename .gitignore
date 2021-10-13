@@ -3,6 +3,9 @@ __pycache__/
 *.py[cod]
 *$py.class
 
+# Directory to hold the *.tidalmg.com CA certificates
+ca_certificate/
+
 # C extensions
 *.so
 

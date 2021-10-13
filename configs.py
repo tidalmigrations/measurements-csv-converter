@@ -3,13 +3,9 @@
 Add your Tidal Migrations credentials.
    - tidal_subdomain is the name of your workspace.
 """
-# tidal_subdomain = "pranav"
-# tidal_email = "pranav@tidalmigrations.com"
-# tidal_password = ""
-
-tidal_subdomain = "dev"
-tidal_email = "dev@tidalmigrations.com"
-tidal_password = "dev123"
+tidal_subdomain = "trreb"
+tidal_email = "dev@trreb.com"
+tidal_password = "myPassword"
 
 
 """Machine Stats output file name

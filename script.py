@@ -61,7 +61,7 @@ def authenticate():
             "Content-Type": "application/json; charset=utf-8"
         }
 
-        response = requests.post(url, data=json.dumps(payload), headers=headers).json()
+        response = requests.post(url, data=json.dumps(payload), headers=headers, verify='ca_certificate.pem').json()
 
         if(response['access_token']):
             BEARER_TOKEN = response['access_token']
@@ -131,7 +131,7 @@ def send_data_to_tidal_api(processed_json_payload):
             "Authorization": "bearer " + BEARER_TOKEN
         }
 
-        response = requests.post(url, data=json.dumps(processed_json_payload), headers=headers)
+        response = requests.post(url, data=json.dumps(processed_json_payload), headers=headers, verify='ca_certificate.pem')
 
         if(response.status_code):
             print("   Success!\n")
