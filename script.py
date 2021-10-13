@@ -16,7 +16,7 @@ import argparse
 import configs
 import json
 import sys
-import urllib.request
+import requests
 
 # Exit if the Python version is less than 3.6
 try:
@@ -52,19 +52,16 @@ def authenticate():
         else:
             url = "https://" + SUBDOMAIN + ".tidalmg.com/api/v1/authenticate"
 
-        request = urllib.request.Request(url)
-
         payload = {
             "username": email,
             "password": password
         }
-        payload_in_bytes = json.dumps(payload).encode('utf-8')
 
-        request.add_header('Content-Type', 'application/json; charset=utf-8')
-        request.add_header('Content-Length', len(payload_in_bytes))
+        headers = {
+            "Content-Type": "application/json; charset=utf-8"
+        }
 
-        response = json.loads(urllib.request.urlopen(
-            request, payload_in_bytes).read())
+        response = requests.post(url, data=json.dumps(payload), headers=headers).json()
 
         if(response['access_token']):
             BEARER_TOKEN = response['access_token']
@@ -129,18 +126,14 @@ def send_data_to_tidal_api(processed_json_payload):
         else:
             url = "https://" + SUBDOMAIN + ".tidalmg.com/api/v1/measurements/import"
 
-        request = urllib.request.Request(url)
+        headers = {
+            "Content-Type": "application/json; charset=utf-8",
+            "Authorization": "bearer " + BEARER_TOKEN
+        }
 
-        payload_in_bytes = json.dumps(processed_json_payload).encode(
-            'utf-8')    # encode payload dictionary to bytes
+        response = requests.post(url, data=json.dumps(processed_json_payload), headers=headers)
 
-        request.add_header('Content-Type', 'application/json; charset=utf-8')
-        request.add_header("Authorization", "bearer " + BEARER_TOKEN)
-        request.add_header('Content-Length', len(payload_in_bytes))
-
-        response = urllib.request.urlopen(request, payload_in_bytes)
-
-        if(response.status):
+        if(response.status_code):
             print("   Success!\n")
     except:
         print("\nError: Could not send the request to the Tidal Migrations API.\n")
