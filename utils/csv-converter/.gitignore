@@ -1,3 +1,5 @@
 node_modules
-output/csv
-output/json
+output/csv/*
+!output/csv/.keep
+output/json/*
+!output/json/.keep
