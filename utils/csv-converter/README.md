@@ -19,12 +19,17 @@ npm install
 npm start
 ```
 
-4. Once the script has be run, you will find the out inside the `measurements/csv` folder. You will have a file per server.
+4. Once the script has be run, you will find the out inside the `output/csv` folder. You will have a file per server.
 
-5. If you need to aggregate all the servers output into one big file. You can run the following command. You will find in the `measurements/csv` folder a new file with the name `aggregated-output.csv`
+5. If you need to aggregate all the servers output into one big file. You can run the following command. You will find in the `output/csv` folder a new file with the name `aggregated-output.csv`
 
 ```bash
 npm run merger
 ```
 
+#### Note:
+If you would like to explore the raw json output, run the following command and check the `output/json` folder
 
+```bash
+npm run debug
+```
